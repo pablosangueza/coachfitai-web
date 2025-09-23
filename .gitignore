@@ -1,0 +1,49 @@
+# ---- .NET / Visual Studio ----
+bin/
+obj/
+out/
+*.exe
+*.dll
+*.app
+*.log
+*.vspscc
+*.user
+*.suo
+*.cache
+*.pdb
+*.mdb
+*.dbmdl
+*.bak
+*.bak2
+*.tmp
+*.svclog
+*.userprefs
+
+# ---- VS Code ----
+.vscode/
+.vscode-test/
+
+# ---- Rider / JetBrains ----
+.idea/
+*.sln.iml
+
+# ---- Build outputs ----
+/wwwroot/dist/
+/wwwroot/build/
+/wwwroot/node_modules/
+/node_modules/
+/dist/
+/build/
+
+# ---- OS ----
+.DS_Store
+Thumbs.db
+
+# ---- Env / Secrets ----
+.env
+.env.local
+appsettings.Development.json
+appsettings.*.local.json
+
+# ---- Azure Static Web Apps ----
+/.swa
