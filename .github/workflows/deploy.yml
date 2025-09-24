@@ -1,0 +1,56 @@
+name: Deploy Blazor WASM to GitHub Pages
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    env:
+      REPO_NAME: coachfitai-web   # <-- cambia al nombre de tu repo
+      PUBLISH_DIR: dist
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Restore & Build
+        run: |
+          dotnet restore
+          dotnet publish -c Release -o ${{ env.PUBLISH_DIR }}
+
+      # Ajusta el <base href> para páginas de proyecto: /REPO/
+      - name: Set base href for GitHub Pages
+        run: |
+          INDEX="${{ env.PUBLISH_DIR }}/wwwroot/index.html"
+          sed -i 's#<base href="/"#<base href="/'${{ env.REPO_NAME }}'/"#' "$INDEX"
+
+      # SPA fallback (Blazor router): copia index a 404.html
+      - name: Add SPA fallback (404)
+        run: |
+          cp "${{ env.PUBLISH_DIR }}/wwwroot/index.html" "${{ env.PUBLISH_DIR }}/wwwroot/404.html"
+
+      # Evita que GitHub Pages procese como Jekyll
+      - name: Add .nojekyll
+        run: |
+          touch "${{ env.PUBLISH_DIR }}/wwwroot/.nojekyll"
+
+      # (Opcional) Dominio propio: crea CNAME
+      # - name: Add CNAME
+      #   run: echo "coachfitai.com" > "${{ env.PUBLISH_DIR }}/wwwroot/CNAME"
+
+      - name: Deploy to gh-pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          publish_dir: ${{ env.PUBLISH_DIR }}/wwwroot
+          publish_branch: gh-pages
+          github_token: ${{ secrets.GITHUB_TOKEN }}
