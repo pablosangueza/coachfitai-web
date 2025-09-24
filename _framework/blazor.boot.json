@@ -1,7 +1,7 @@
 {
   "mainAssemblyName": "CoachFitAI.Web",
   "resources": {
-    "hash": "sha256-YBGrxCgem0Qs6nlWVuVWLRhU8vkFu9aYYW6VTOBcEKc=",
+    "hash": "sha256-YiDvpH1+EoLwQK7hHxrpeZK0+gxiprgAIQyuD8VNk20=",
     "jsModuleNative": {
       "dotnet.native.8.0.20.elargmqivm.js": "sha256-D0bzod5lwwSzPR43JC8TTCcZKw+3jIHOk8CZFCRj5is="
     },
@@ -17,7 +17,7 @@
       "icudt_no_CJK.dat": "sha256-L7sV7NEYP37/Qr2FPCePo5cJqRgTXRwGHuwF5Q+0Nfs="
     },
     "assembly": {
-      "CoachFitAI.Web.wasm": "sha256-nBMP29SHCP5Z0KIqUciIyxvQlrVOWCoFKNd/MRk8Szk=",
+      "CoachFitAI.Web.wasm": "sha256-wXPDczsGAp3PRIu+3qe3GvrAtoWKtxqMYc2qSFXTtWA=",
       "Microsoft.AspNetCore.Components.Forms.wasm": "sha256-qTGF+dRDehwQIFifgIKfxmeff+M5kiiWaPbwKF+oi8Y=",
       "Microsoft.AspNetCore.Components.wasm": "sha256-hKqX3ydYk9CAiaq2rHBOXXSHJIuO7eup1I6M2lfD5ds=",
       "Microsoft.AspNetCore.Components.Web.wasm": "sha256-2jItKP4MxfELYXeHMO+kconjd4HBNM7tk/vm4apTEiY=",
