@@ -7,7 +7,7 @@
 <h2>Checkout</h2>
 @if (State.Intake is null)
 {
-  <p>No intake found. <a href="/generate">Go back</a></p>
+  <p>No intake found. <a href="generate">Go back</a></p>
 }
 else
 {
@@ -21,6 +21,6 @@ else
     var order = await Payments.StartCheckoutAsync(7m);
     State.SetOrder(order);
     var ok = await Payments.ConfirmPaymentAsync(order.Id);
-    if (ok) Nav.NavigateTo("/thank-you");
+    if (ok) Nav.NavigateTo("thank-you");
   }
 }

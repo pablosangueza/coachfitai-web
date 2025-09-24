@@ -9,9 +9,9 @@
 @code {
   protected override async Task OnInitializedAsync()
   {
-    if (State.Intake is null) { Nav.NavigateTo("/generate"); return; }
+    if (State.Intake is null) { Nav.NavigateTo("generate"); return; }
     var plan = await Plans.GeneratePlanAsync(State.Intake);
     State.SetPlan(plan);
-    Nav.NavigateTo("/plan");
+    Nav.NavigateTo("plan");
   }
 }
