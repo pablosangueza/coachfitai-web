@@ -1,16 +1,20 @@
 ﻿@inherits LayoutComponentBase
-<div class="page">
-    <div class="sidebar">
-        <NavMenu />
-    </div>
 
-    <main>
-        <div class="top-row px-4">
-            <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
-        </div>
+<div class="cf-page">
+  <header class="cf-nav">
+    <a class="cf-brand" href="">CoachFit AI</a>
+    <nav class="cf-navlinks">
+      <a href="generate">Generate</a>
+      <a href="plan">Plan</a>
+      <a href="https://github.com/pablosangueza/coachfitai-web" target="_blank" rel="noopener">GitHub</a>
+    </nav>
+  </header>
 
-        <article class="content px-4">
-            @Body
-        </article>
-    </main>
+  <main>
+    @Body
+  </main>
+
+  <footer class="cf-footer">
+    <p>© @DateTime.Now.Year CoachFit AI — Not medical advice.</p>
+  </footer>
 </div>
