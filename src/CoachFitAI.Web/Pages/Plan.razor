@@ -1,0 +1,20 @@
+@page "/plan"
+@inject AppState State
+
+<h2>Your Plan</h2>
+@if (State.Plan is null)
+{
+  <p>No plan yet.</p>
+}
+else
+{
+  <p><b>Summary:</b> @State.Plan.Summary</p>
+  <p><b>Calories/day:</b> @State.Plan.CaloriesPerDay.Min–@State.Plan.CaloriesPerDay.Max</p>
+  <h4>Sessions</h4>
+  <ul>
+    @foreach (var s in State.Plan.Sessions)
+    {
+      <li>@s.Day — @s.Focus (@s.DurationMin min)</li>
+    }
+  </ul>
+}

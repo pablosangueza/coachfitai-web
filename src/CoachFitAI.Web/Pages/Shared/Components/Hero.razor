@@ -1,0 +1,12 @@
+<div style="text-align:center;padding:48px 16px">
+  <h1>@Title</h1>
+  <p>@Subtitle</p>
+  <a class="btn" href="@CtaHref">@CtaText</a>
+</div>
+
+@code{
+  [Parameter] public string Title { get; set; } = "";
+  [Parameter] public string Subtitle { get; set; } = "";
+  [Parameter] public string CtaText { get; set; } = "Start";
+  [Parameter] public string CtaHref { get; set; } = "/generate";
+}

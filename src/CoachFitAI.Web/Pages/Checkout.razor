@@ -1,0 +1,26 @@
+@page "/checkout"
+@using CoachFitAI.Web.Services
+@inject AppState State
+@inject IPaymentService Payments
+@inject NavigationManager Nav
+
+<h2>Checkout</h2>
+@if (State.Intake is null)
+{
+  <p>No intake found. <a href="/generate">Go back</a></p>
+}
+else
+{
+  <p>Plan price: <b>$7</b></p>
+  <button class="btn btn-primary" @onclick="Pay">Pay (mock)</button>
+}
+
+@code {
+  async Task Pay()
+  {
+    var order = await Payments.StartCheckoutAsync(7m);
+    State.SetOrder(order);
+    var ok = await Payments.ConfirmPaymentAsync(order.Id);
+    if (ok) Nav.NavigateTo("/thank-you");
+  }
+}

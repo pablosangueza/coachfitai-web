@@ -1,0 +1,25 @@
+@using CoachFitAI.Web.State
+@code{ [Parameter] public PlanDto? Plan { get; set; } }
+
+@if (Plan is not null)
+{
+  <h2>Summary</h2>
+  <p>@Plan.Summary</p>
+
+  <h3>Nutrition</h3>
+  <p>Calories/day: @Plan.CaloriesPerDay.Min–@Plan.CaloriesPerDay.Max</p>
+  <ul>
+    @foreach (var day in Plan.WeeklyPlan)
+    {
+      <li><b>@day.Day</b> — @day.Meals.First().Name (@day.Meals.First().Kcal kcal)</li>
+    }
+  </ul>
+
+  <h3>Training</h3>
+  <ul>
+    @foreach (var s in Plan.Sessions)
+    {
+      <li><b>@s.Day</b> — @s.Focus (@s.DurationMin min)</li>
+    }
+  </ul>
+}

@@ -1,0 +1,44 @@
+@page "/generate"
+@using CoachFitAI.Web.State
+@inject AppState State
+@inject NavigationManager Nav
+
+<h2>Tell us about you</h2>
+<EditForm Model="@m" OnValidSubmit="OnSubmit">
+  <div class="row g-2">
+    <div class="col-md-3"><label>Gender</label><InputText @bind-Value="m.Gender" class="form-control" /></div>
+    <div class="col-md-2"><label>Age</label><InputNumber @bind-Value="m.Age" class="form-control" /></div>
+    <div class="col-md-2"><label>Weight (kg)</label><InputNumber @bind-Value="m.WeightKg" class="form-control" /></div>
+    <div class="col-md-2"><label>Height (cm)</label><InputNumber @bind-Value="m.HeightCm" class="form-control" /></div>
+    <div class="col-md-3"><label>Goal</label><InputText @bind-Value="m.Goal" class="form-control" /></div>
+    <div class="col-md-3"><label>Level</label><InputText @bind-Value="m.Level" class="form-control" /></div>
+    <div class="col-md-3"><label>Body type</label><InputText @bind-Value="m.BodyType" class="form-control" /></div>
+    <div class="col-md-4"><label>Restrictions (csv)</label><InputText @bind-Value="restrictionsCsv" class="form-control" /></div>
+  </div>
+  <button class="btn btn-success mt-3" type="submit">Continue to payment</button>
+</EditForm>
+
+@code {
+  class IntakeModel {
+    public string Gender { get; set; } = "M";
+    public int Age { get; set; } = 30;
+    public double WeightKg { get; set; } = 80;
+    public double HeightCm { get; set; } = 175;
+    public string Goal { get; set; } = "lose_fat";
+    public string Level { get; set; } = "beginner";
+    public string BodyType { get; set; } = "mesomorph";
+    public string DailyActivity { get; set; } = "moderate";
+    public string? PhotoUrl { get; set; }
+  }
+  IntakeModel m = new();
+  string restrictionsCsv = "";
+  void OnSubmit()
+  {
+    var dto = new IntakeDto(
+      m.Gender, m.Age, m.WeightKg, m.HeightCm, m.Goal, m.Level, m.BodyType,
+      restrictionsCsv.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries),
+      m.DailyActivity, m.PhotoUrl);
+    State.SetIntake(dto);
+    Nav.NavigateTo("/checkout");
+  }
+}

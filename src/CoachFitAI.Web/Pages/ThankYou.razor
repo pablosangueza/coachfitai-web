@@ -1,0 +1,17 @@
+@page "/thank-you"
+@inject AppState State
+@inject CoachFitAI.Web.Services.IPlanService Plans
+@inject NavigationManager Nav
+
+<h2>Thanks!</h2>
+<p>Generating your plan…</p>
+
+@code {
+  protected override async Task OnInitializedAsync()
+  {
+    if (State.Intake is null) { Nav.NavigateTo("/generate"); return; }
+    var plan = await Plans.GeneratePlanAsync(State.Intake);
+    State.SetPlan(plan);
+    Nav.NavigateTo("/plan");
+  }
+}
