@@ -12,7 +12,8 @@ jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
     env:
-      REPO_NAME: coachfitai-web   # <-- cambia al nombre de tu repo
+      REPO_NAME: coachfitai-web   # cambia si el repo tiene otro nombre
+      PROJECT_PATH: src/CoachFitAI.Web
       PUBLISH_DIR: dist
     steps:
       - name: Checkout
@@ -25,28 +26,21 @@ jobs:
 
       - name: Restore & Build
         run: |
-          dotnet restore
-          dotnet publish -c Release -o ${{ env.PUBLISH_DIR }}
+          dotnet restore ${{ env.PROJECT_PATH }}
+          dotnet publish ${{ env.PROJECT_PATH }} -c Release -o ${{ env.PUBLISH_DIR }}
 
-      # Ajusta el <base href> para páginas de proyecto: /REPO/
+      # Ajusta el <base href> para GitHub Pages de proyecto
       - name: Set base href for GitHub Pages
         run: |
           INDEX="${{ env.PUBLISH_DIR }}/wwwroot/index.html"
           sed -i 's#<base href="/"#<base href="/'${{ env.REPO_NAME }}'/"#' "$INDEX"
 
-      # SPA fallback (Blazor router): copia index a 404.html
+      # SPA fallback
       - name: Add SPA fallback (404)
-        run: |
-          cp "${{ env.PUBLISH_DIR }}/wwwroot/index.html" "${{ env.PUBLISH_DIR }}/wwwroot/404.html"
+        run: cp "${{ env.PUBLISH_DIR }}/wwwroot/index.html" "${{ env.PUBLISH_DIR }}/wwwroot/404.html"
 
-      # Evita que GitHub Pages procese como Jekyll
       - name: Add .nojekyll
-        run: |
-          touch "${{ env.PUBLISH_DIR }}/wwwroot/.nojekyll"
-
-      # (Opcional) Dominio propio: crea CNAME
-      # - name: Add CNAME
-      #   run: echo "coachfitai.com" > "${{ env.PUBLISH_DIR }}/wwwroot/CNAME"
+        run: touch "${{ env.PUBLISH_DIR }}/wwwroot/.nojekyll"
 
       - name: Deploy to gh-pages
         uses: peaceiris/actions-gh-pages@v3
