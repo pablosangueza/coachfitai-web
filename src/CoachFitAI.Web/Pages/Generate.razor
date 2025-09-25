@@ -4,37 +4,71 @@
 @inject AppState State
 @inject NavigationManager Nav
 
-<h2 class="cf-h2">Your details</h2>
+<div class="container mt-5">
+  <div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">   <!-- limit width and center -->
+      
+      <h2 class="cf-h2 text-center mb-4">Your details</h2>
 
-<EditForm Model="@m" OnValidSubmit="OnSubmit">
-  <div class="row g-2">
-    <div class="col-md-3"><label>Gender</label><InputText @bind-Value="m.Gender" class="form-control" /></div>
-    <div class="col-md-2"><label>Age</label><InputNumber @bind-Value="m.Age" class="form-control" /></div>
-    <div class="col-md-2"><label>Weight (kg)</label><InputNumber @bind-Value="m.WeightKg" class="form-control" /></div>
-    <div class="col-md-2"><label>Height (cm)</label><InputNumber @bind-Value="m.HeightCm" class="form-control" /></div>
-    <div class="col-md-3"><label>Goal</label><InputText @bind-Value="m.Goal" class="form-control" /></div>
-    <div class="col-md-3"><label>Level</label><InputText @bind-Value="m.Level" class="form-control" /></div>
-    <div class="col-md-3"><label>Body type</label><InputText @bind-Value="m.BodyType" class="form-control" /></div>
-    <div class="col-md-4"><label>Restrictions (csv)</label><InputText @bind-Value="restrictionsCsv" class="form-control" /></div>
+      <EditForm Model="@m" OnValidSubmit="OnSubmit">
+        <div class="row g-2">
+          <div class="col-md-6">
+            <label>Gender</label>
+            <InputText @bind-Value="m.Gender" class="form-control" />
+          </div>
+          <div class="col-md-6">
+            <label>Age</label>
+            <InputNumber @bind-Value="m.Age" class="form-control" />
+          </div>
+          <div class="col-md-6">
+            <label>Weight (kg)</label>
+            <InputNumber @bind-Value="m.WeightKg" class="form-control" />
+          </div>
+          <div class="col-md-6">
+            <label>Height (cm)</label>
+            <InputNumber @bind-Value="m.HeightCm" class="form-control" />
+          </div>
+          <div class="col-md-12">
+            <label>Goal</label>
+            <InputText @bind-Value="m.Goal" class="form-control" />
+          </div>
+          <div class="col-md-6">
+            <label>Level</label>
+            <InputText @bind-Value="m.Level" class="form-control" />
+          </div>
+          <div class="col-md-6">
+            <label>Body type</label>
+            <InputText @bind-Value="m.BodyType" class="form-control" />
+          </div>
+          <div class="col-md-12">
+            <label>Restrictions (csv)</label>
+            <InputText @bind-Value="restrictionsCsv" class="form-control" />
+          </div>
 
-    <div class="col-md-6">
-      <label>Photo (optional)</label>
-      <InputFile OnChange="OnFileChange" accept="image/*" />
-      @if (!string.IsNullOrEmpty(m.PhotoUrl))
-      {
-        <div class="mt-2">
-          <img src="@m.PhotoUrl" alt="preview" style="max-width:220px;border-radius:12px;" />
+          <div class="col-md-12 mt-3">
+            <label>Photo (optional)</label>
+            <InputFile OnChange="OnFileChange" accept="image/*" />
+            @if (!string.IsNullOrEmpty(m.PhotoUrl))
+            {
+              <div class="mt-2 text-center">
+                <img src="@m.PhotoUrl" alt="preview" style="max-width:220px;border-radius:12px;" />
+              </div>
+            }
+            @if (!string.IsNullOrEmpty(error))
+            {
+              <div class="text-danger mt-1">@error</div>
+            }
+          </div>
         </div>
-      }
-      @if (!string.IsNullOrEmpty(error))
-      {
-        <div class="text-danger mt-1">@error</div>
-      }
+
+        <div class="text-center">
+          <button class="btn btn-success mt-4 px-4" type="submit">Continue to payment</button>
+        </div>
+      </EditForm>
     </div>
   </div>
+</div>
 
-  <button class="btn btn-success mt-3" type="submit">Continue to payment</button>
-</EditForm>
 
 @code {
   class IntakeModel {

@@ -4,16 +4,25 @@
 @inject IPaymentService Payments
 @inject NavigationManager Nav
 
-<h2>Checkout</h2>
-@if (State.Intake is null)
-{
-  <p>No intake found. <a href="generate">Go back</a></p>
-}
-else
-{
-  <p>Plan price: <b>$7</b></p>
-  <button class="btn btn-primary" @onclick="Pay">Pay (mock)</button>
-}
+<div class="container mt-5">
+  <div class="row justify-content-center">
+    <div class="col-md-6 col-lg-5 text-center">
+
+      <h2 class="cf-h2 mb-4">Checkout</h2>
+
+      @if (State.Intake is null)
+      {
+        <p>No intake found. <a href="generate">Go back</a></p>
+      }
+      else
+      {
+        <p class="fs-5">Plan price: <b>$7</b></p>
+        <button class="btn btn-primary px-4 mt-3" @onclick="Pay">Pay (mock)</button>
+      }
+
+    </div>
+  </div>
+</div>
 
 @code {
   async Task Pay()

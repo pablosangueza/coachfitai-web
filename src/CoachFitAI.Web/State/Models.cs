@@ -4,6 +4,7 @@ public record IntakeDto(
     string Gender, int Age, double WeightKg, double HeightCm,
     string Goal, string Level, string BodyType,
     string[] Restrictions, string DailyActivity, string? PhotoUrl);
+    
 
 public record OrderDto(Guid Id, decimal Amount, string Currency, string Provider, string Status);
 
