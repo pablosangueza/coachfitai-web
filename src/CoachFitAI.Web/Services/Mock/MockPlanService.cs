@@ -5,21 +5,60 @@ public class MockPlanService : IPlanService
 {
     public Task<PlanDto> GeneratePlanAsync(IntakeDto i)
     {
-        var plan = new PlanDto(
-            (2000, 2200),
-            (160, 220, 70),
-            new[] {
-              new DayNutritionDto("Monday",
-                new[] { new MealDto("Oats + Whey",
-                  new[] { new IngredientDto("Oats",80), new IngredientDto("Milk",250), new IngredientDto("Whey",30)}, 520) })
+        var plan = new PlanDto
+        {
+            CaloriesPerDay = (2000, 2200),
+            Macros = (160, 220, 70),
+            WeeklyPlan = new[]
+            {
+                new DayNutritionDto
+                {
+                    Day = "Monday",
+                    Meals = new[]
+                    {
+                        new MealDto
+                        {
+                            Name = "Oats + Whey",
+                            Ingredients = new[]
+                            {
+                                new IngredientDto { Item = "Oats", Grams = 80 },
+                                new IngredientDto { Item = "Milk", Grams = 250 },
+                                new IngredientDto { Item = "Whey", Grams = 30 }
+                            },
+                            Kcal = 520
+                        }
+                    }
+                }
             },
-            new[] { new ShoppingItemDto("Oats","600 g") },
-            5,
-            new[] { new SessionDto("Monday","Push", new[]{ new ExerciseDto("Bench Press",4,"6-8","RPE 7") },60) },
-            new[] { "Assumed moderate daily activity" },
-            new[] { "This is not medical advice" },
-            "Balanced plan to lose fat while keeping muscle."
-        );
+            ShoppingList = new[]
+            {
+                new ShoppingItemDto { Item = "Oats", Quantity = "600 g" }
+            },
+            DaysPerWeek = 5,
+            Sessions = new[]
+            {
+                new SessionDto
+                {
+                    Day = "Monday",
+                    Focus = "Push",
+                    Exercises = new[]
+                    {
+                        new ExerciseDto
+                        {
+                            Name = "Bench Press",
+                            Sets = 4,
+                            Reps = "6-8",
+                            Intensity = "RPE 7"
+                        }
+                    },
+                    DurationMin = 60
+                }
+            },
+            Assumptions = new[] { "Assumed moderate daily activity" },
+            Warnings = new[] { "This is not medical advice" },
+            Summary = "Balanced plan to lose fat while keeping muscle."
+        };
+
         return Task.FromResult(plan);
     }
 }

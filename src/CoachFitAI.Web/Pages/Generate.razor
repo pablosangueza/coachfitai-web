@@ -118,10 +118,19 @@
 
   void OnSubmit()
   {
-    var dto = new IntakeDto(
-      m.Gender, m.Age, m.WeightKg, m.HeightCm, m.Goal, m.Level, m.BodyType,
-      restrictionsCsv.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries),
-      m.DailyActivity, m.PhotoUrl);
+    var dto = new IntakeDto
+    {
+      Gender = m.Gender,
+      Age = m.Age,
+      WeightKg = m.WeightKg,
+      HeightCm = m.HeightCm,
+      Goal = m.Goal,
+      Level = m.Level,
+      BodyType = m.BodyType,
+      Restrictions = restrictionsCsv.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries),
+      DailyActivity = m.DailyActivity,
+      PhotoUrl = m.PhotoUrl
+    };
 
     State.SetIntake(dto);
     Nav.NavigateTo("checkout"); // relative for GH Pages
