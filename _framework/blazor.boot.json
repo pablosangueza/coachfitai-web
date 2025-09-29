@@ -1,7 +1,7 @@
 {
   "mainAssemblyName": "CoachFitAI.Web",
   "resources": {
-    "hash": "sha256-TI2o2hnByNwyovxlhCT+GSh+iqN3mHgGr3dvclK3O7o=",
+    "hash": "sha256-Uj9VPQV3ZDWezwi0sb1EC7SHeNqi3JHZDi73hfzhldg=",
     "jsModuleNative": {
       "dotnet.native.js": "sha256-D0bzod5lwwSzPR43JC8TTCcZKw+3jIHOk8CZFCRj5is="
     },
@@ -36,7 +36,7 @@
       "System.Collections.Concurrent.wasm": "sha256-NkZC68dMHVt5I6jrkKaMa8aDpHmpP5Ev5KseRzEUzmE=",
       "System.Collections.NonGeneric.wasm": "sha256-JCsRXubUwdYXHMXouCM3PgGYP3egdQtD/qByLQfR0c8=",
       "System.Collections.Specialized.wasm": "sha256-IWKIqYIzn1TeuMJurNbO/2Xf3aRrBuUg3iUl2nn27Sw=",
-      "System.Collections.wasm": "sha256-HX65jDCixx0dZqrhqcnSlD4NLCxlQ+f1Ijbev78RjV0=",
+      "System.Collections.wasm": "sha256-5BSwnmTUtvUSarA0dU/R22gn084QfhfwUtqMYqUQweo=",
       "System.ComponentModel.Primitives.wasm": "sha256-jowm1Kk9Xb7vl7eU9zEcHNwzxl3s7lBNMZox09ZGNfk=",
       "System.ComponentModel.TypeConverter.wasm": "sha256-MLhh6phY5p6r0n5ZxRD32zFXOaZuTff9whJgkRFxX7w=",
       "System.ComponentModel.wasm": "sha256-/zzH1dhTR2VZ4pJJPbvoypOm8TmppNSIcKQ1EV8N6D0=",
@@ -50,13 +50,13 @@
       "System.Private.Uri.wasm": "sha256-o6HwpABOtftkzNRROc1U5seWO22RLFcUZCfSoziUTq4=",
       "System.Runtime.InteropServices.JavaScript.wasm": "sha256-yZ+Z6Ds6n3P/NW9CBYC3m9L6eAMv+sCrpEt/Du2Jogs=",
       "System.Runtime.Serialization.Primitives.wasm": "sha256-iCBLOCJh3J/QZS++gOCkcpXDHYoM5j4Yqp2kNM2BKCM=",
-      "System.Runtime.wasm": "sha256-HU72fxkJyY54+swC3SUoV08PBd2GKR5FrynesXYre4g=",
+      "System.Runtime.wasm": "sha256-26sQBPBAtgU/qbBeJ+Z67f1QLsiMMxfTpeNQTAR6IxA=",
       "System.Text.Encodings.Web.wasm": "sha256-bDRdy+G9zVcWlrj3vP+blIqH38T9rpqxvXdcv1INqnE=",
       "System.Text.Json.wasm": "sha256-TK0ueSvz09onLgsC4sfMk4+9qXGikpQo9gbfY86zTQE=",
       "System.Text.RegularExpressions.wasm": "sha256-3W9FSHhJnymXzdUqrxjgrpUOznpPW+8vDLZntL7hmmA=",
       "System.wasm": "sha256-9DLmgOsnmEbjuZrRVFruRmVRvh/skjCDv6hQMjVZ3K8=",
-      "System.Private.CoreLib.wasm": "sha256-GxKplD3GVUgdfDQQrD6Ff9CYdHVC4RYmxi4cmVKGkQc=",
-      "CoachFitAI.Web.wasm": "sha256-qVdN01Fh00EEFs7fazuNR3q0Ymu3KzEHy98ei+sKrr8="
+      "System.Private.CoreLib.wasm": "sha256-conedFji7MDrF4/Fdq5RCtlNE8YbTtjJfsXU1ijvZ3o=",
+      "CoachFitAI.Web.wasm": "sha256-YXnzZb5mZP+sTItrIgEXb6yC/ZYpMtC4nOxn+IApF7c="
     }
   },
   "cacheBootResources": true,
