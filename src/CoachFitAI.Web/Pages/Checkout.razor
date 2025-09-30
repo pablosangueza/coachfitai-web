@@ -17,7 +17,28 @@
       else
       {
         <p class="fs-5">Plan price: <b>$7</b></p>
-        <button class="btn btn-primary px-4 mt-3" @onclick="Pay">Pay (mock)</button>
+
+        @if (!string.IsNullOrEmpty(_error))
+        {
+          <div class="alert alert-danger" role="alert">@_error</div>
+        }
+
+        @if (_order is null)
+        {
+          <button class="btn btn-primary px-4 mt-3" disabled="@_isStarting" @onclick="StartPaymentAsync">
+            @if (_isStarting)
+            {
+              <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+            }
+            Start USDT/USDC payment
+          </button>
+          <p class="text-muted small mt-3">You will receive wallet details and status updates after starting the checkout.</p>
+        }
+        else
+        {
+          <CryptoPaymentWidget Order="_order" OnStatusChanged="HandleOrderStatusAsync" />
+          <p class="text-muted small mt-3">Leave this tab open. We will redirect you automatically once the payment is confirmed.</p>
+        }
       }
 
     </div>
@@ -25,11 +46,47 @@
 </div>
 
 @code {
-  async Task Pay()
+  OrderDto? _order;
+  bool _isStarting;
+  string? _error;
+
+  protected override void OnInitialized()
   {
-    var order = await Payments.StartCheckoutAsync(7m);
-    State.SetOrder(order);
-    var ok = await Payments.ConfirmPaymentAsync(order.Id);
-    if (ok) Nav.NavigateTo("thank-you");
+    _order = State.Order;
+  }
+
+  async Task StartPaymentAsync()
+  {
+    if (_isStarting)
+    {
+      return;
+    }
+
+    _error = null;
+    _isStarting = true;
+
+    try
+    {
+      _order = await Payments.StartCheckoutAsync(7m);
+      State.SetOrder(_order);
+    }
+    catch
+    {
+      _error = "We couldn't start the crypto checkout. Please try again.";
+      _order = null;
+    }
+    finally
+    {
+      _isStarting = false;
+    }
+  }
+
+  async Task HandleOrderStatusAsync(OrderStatusUpdateDto update)
+  {
+    var ok = await Payments.ConfirmPaymentAsync(update.OrderId);
+    if (ok)
+    {
+      Nav.NavigateTo("thank-you");
+    }
   }
 }
