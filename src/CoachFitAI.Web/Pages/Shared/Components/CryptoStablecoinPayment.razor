@@ -1,92 +1,94 @@
 @using System.Globalization
 @using System.Linq
+@using Microsoft.JSInterop
 @inject IPaymentService Payments
 @inject AppState State
+@inject IJSRuntime JS
 
-<div class="card shadow-sm crypto-stablecoin border-0">
-  <div class="card-body">
-    <h5 class="card-title">Pay with USDT or USDC</h5>
-    <p class="text-muted small mb-4">
+<div class="cf-card cf-payment-card">
+  <div class="cf-payment-header">
+    <h5 class="cf-payment-title">Pay with USDT or USDC</h5>
+    <p class="cf-payment-subtitle">
       Send the exact amount to the wallet address below using one of the supported networks.
       Once the transfer is complete, confirm to finalize your order.
     </p>
+  </div>
 
-    @if (_isLoading)
-    {
-      <div class="text-center py-4">
-        <div class="spinner-border text-primary" role="status">
-          <span class="visually-hidden">Loading...</span>
-        </div>
-      </div>
-    }
-    else if (!string.IsNullOrEmpty(_errorMessage))
-    {
-      <div class="alert alert-danger" role="alert">
-        @_errorMessage
-      </div>
-      <button class="btn btn-outline-primary w-100" @onclick="ReloadOrder">Retry</button>
-    }
-    else if (_isCompleted)
-    {
-      <div class="alert alert-success" role="alert">
-        Payment confirmed! You will be redirected shortly.
-      </div>
-    }
-    else if (_order is not null)
-    {
-      <div class="mb-3">
-        <label class="form-label">Choose a stablecoin</label>
-        <div class="btn-group w-100" role="group">
-          @foreach (var asset in _options.Keys)
-          {
-            <button type="button"
-                    class="btn btn-outline-primary @((asset == _selectedAsset ? "active" : string.Empty))"
-                    @onclick="() => SelectAsset(asset)">
-              @asset
-            </button>
-          }
-        </div>
-      </div>
-
-      <div class="mb-3">
-        <label class="form-label">Select network</label>
-        <select class="form-select" @bind="_selectedNetwork">
-          @foreach (var option in _options[_selectedAsset])
-          {
-            <option value="@option.Network">@option.Network</option>
-          }
-        </select>
-        <div class="form-text">Only send @AmountUsd.ToString("0.00", CultureInfo.InvariantCulture) @_selectedAsset on this network.</div>
-      </div>
-
-      <div class="mb-3">
-        <label class="form-label">Amount</label>
-        <div class="fs-5 fw-semibold">
-          @AmountUsd.ToString("0.00", CultureInfo.InvariantCulture) @_selectedAsset
-        </div>
-        <div class="form-text">Stablecoins track the US Dollar 1:1, so @AmountUsd.ToString("0.00", CultureInfo.InvariantCulture) USD = @AmountUsd.ToString("0.00", CultureInfo.InvariantCulture) @_selectedAsset.</div>
-      </div>
-
-      <div class="mb-3">
-        <label class="form-label">Wallet address</label>
-        <div class="border rounded px-3 py-2 bg-light user-select-all">
-          @SelectedOption.Address
-        </div>
-        @if (!string.IsNullOrWhiteSpace(SelectedOption.Note))
+  @if (_isLoading)
+  {
+    <div class="cf-payment-loading" role="status" aria-live="polite">
+      <div class="cf-spinner" aria-hidden="true"></div>
+      <span>Preparing payment...</span>
+    </div>
+  }
+  else if (!string.IsNullOrEmpty(_errorMessage))
+  {
+    <div class="cf-alert cf-alert-error" role="alert">
+      @_errorMessage
+    </div>
+    <button class="cf-btn cf-btn-primary w-100" @onclick="ReloadOrder">Retry</button>
+  }
+  else if (_isCompleted)
+  {
+    <div class="cf-alert cf-alert-success" role="status">
+      Payment confirmed! You will be redirected shortly.
+    </div>
+  }
+  else if (_order is not null)
+  {
+    <div class="cf-field">
+      <label>Choose a stablecoin</label>
+      <div class="cf-pill-group">
+        @foreach (var asset in _options.Keys)
         {
-          <div class="form-text">@SelectedOption.Note</div>
+          <button type="button"
+                  class="cf-pill @((asset == _selectedAsset ? "active" : string.Empty))"
+                  @onclick="() => SelectAsset(asset)">
+            @asset
+          </button>
         }
       </div>
+    </div>
 
-      <button class="btn btn-success w-100" @onclick="ConfirmPayment" disabled="@_isConfirming">
-        @_confirmButtonText
-      </button>
-      @if (!string.IsNullOrEmpty(_statusMessage))
+    <div class="cf-field">
+      <label>Select network</label>
+      <select @bind="_selectedNetwork">
+        @foreach (var option in _options[_selectedAsset])
+        {
+          <option value="@option.Network">@option.Network</option>
+        }
+      </select>
+      <span class="cf-help">Only send @AmountUsd.ToString("0.00", CultureInfo.InvariantCulture) @_selectedAsset on this network.</span>
+    </div>
+
+    <div class="cf-field">
+      <label>Amount</label>
+      <div class="cf-amount-display">
+        <span class="cf-amount-value">@AmountUsd.ToString("0.00", CultureInfo.InvariantCulture)</span>
+        <span class="cf-amount-asset">@_selectedAsset</span>
+      </div>
+      <span class="cf-help">Stablecoins track the US Dollar 1:1, so @AmountUsd.ToString("0.00", CultureInfo.InvariantCulture) USD = @AmountUsd.ToString("0.00", CultureInfo.InvariantCulture) @_selectedAsset.</span>
+    </div>
+
+    <div class="cf-field">
+      <label>Wallet address</label>
+      <div class="cf-wallet" title="Click to copy" @onclick="() => CopyToClipboard(SelectedOption.Address)">
+        @SelectedOption.Address
+      </div>
+      @if (!string.IsNullOrWhiteSpace(SelectedOption.Note))
       {
-        <div class="form-text text-muted text-center mt-2">@_statusMessage</div>
+        <span class="cf-help">@SelectedOption.Note</span>
       }
+    </div>
+
+    <button class="cf-btn cf-btn-primary w-100" @onclick="ConfirmPayment" disabled="@_isConfirming">
+      @_confirmButtonText
+    </button>
+    @if (!string.IsNullOrEmpty(_statusMessage))
+    {
+      <div class="cf-status">@_statusMessage</div>
     }
-  </div>
+  }
 </div>
 
 @code {
@@ -121,6 +123,21 @@
   private string _confirmButtonText => _isConfirming ? "Confirming..." : "I have sent the payment";
 
   private CryptoOption SelectedOption => _options[_selectedAsset].First(o => o.Network == _selectedNetwork);
+
+  private async Task CopyToClipboard(string address)
+  {
+    try
+    {
+      await JS.InvokeVoidAsync("navigator.clipboard.writeText", address);
+      _statusMessage = "Wallet address copied";
+    }
+    catch
+    {
+      _statusMessage = "Copy this address manually if your browser blocks clipboard access.";
+    }
+
+    StateHasChanged();
+  }
 
   protected override async Task OnInitializedAsync()
   {
