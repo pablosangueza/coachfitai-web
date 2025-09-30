@@ -1,0 +1,190 @@
+@using System.Globalization
+@implements IAsyncDisposable
+@inject IPaymentService PaymentService
+@inject IJSRuntime JS
+
+@if (Order is null)
+{
+    <div class="alert alert-info">Payment session has not been started.</div>
+}
+else
+{
+    <div class="card shadow-sm text-start">
+        <div class="card-body">
+            <h5 class="card-title">Send stablecoin payment</h5>
+            <p class="card-text">
+                Send exactly <b>@Order.Amount.ToString("0.00") @Order.Currency</b> in USDT or USDC to one of the wallet addresses below.
+                The checkout will advance automatically after the payment is detected by the webhook listener.
+            </p>
+        </div>
+
+        <ul class="list-group list-group-flush">
+            @foreach (var wallet in Order.Wallets ?? Array.Empty<CryptoWalletDto>())
+            {
+                <li class="list-group-item">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <span class="badge bg-dark">@wallet.Symbol</span>
+                            <span class="ms-2 text-muted">@wallet.Network</span>
+                        </div>
+                        <button class="btn btn-sm btn-outline-secondary" @onclick="() => CopyAddress(wallet.Address)">
+                            Copy address
+                        </button>
+                    </div>
+                    <div class="mt-2">
+                        <code class="small user-select-all">@wallet.Address</code>
+                    </div>
+                    @if (!string.IsNullOrWhiteSpace(wallet.Memo))
+                    {
+                        <div class="mt-2 small">
+                            Memo / Tag: <code class="user-select-all">@wallet.Memo</code>
+                        </div>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(wallet.Note))
+                    {
+                        <div class="mt-2 small text-muted">@wallet.Note</div>
+                    }
+                </li>
+            }
+        </ul>
+
+        <div class="card-body">
+            <div class="d-flex align-items-center">
+                <span class="me-2 fw-semibold">Status:</span>
+                <span class="@StatusBadgeClass">@StatusText</span>
+            </div>
+            @if (!string.IsNullOrEmpty(_statusMessage))
+            {
+                <div class="small text-muted mt-2">@_statusMessage</div>
+            }
+            @if (!string.IsNullOrEmpty(_transactionHash))
+            {
+                <div class="small text-muted mt-2">
+                    Tx hash: <code class="user-select-all">@_transactionHash</code>
+                </div>
+            }
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public OrderDto? Order { get; set; }
+    [Parameter] public EventCallback<OrderStatusUpdateDto> OnStatusChanged { get; set; }
+
+    private Guid? _listeningOrderId;
+    private CancellationTokenSource? _cts;
+    private Task? _listenTask;
+    private string? _statusMessage;
+    private string? _transactionHash;
+
+    private string StatusText => string.IsNullOrWhiteSpace(Order?.Status)
+        ? "Pending"
+        : CultureInfo.CurrentCulture.TextInfo.ToTitleCase(Order!.Status);
+
+    private string StatusBadgeClass => Order?.Status?.ToLowerInvariant() switch
+    {
+        "confirmed" or "fulfilled" => "badge bg-success",
+        "pending" => "badge bg-warning text-dark",
+        "failed" => "badge bg-danger",
+        _ => "badge bg-secondary"
+    };
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (Order?.Id == _listeningOrderId)
+        {
+            return;
+        }
+
+        await StopListeningAsync();
+
+        if (Order is null)
+        {
+            _statusMessage = null;
+            _transactionHash = null;
+            return;
+        }
+
+        _listeningOrderId = Order.Id;
+        _statusMessage = "Awaiting your transfer. Leave this page open while we monitor the blockchain.";
+        _transactionHash = null;
+
+        _cts = new CancellationTokenSource();
+        _listenTask = PaymentService.SubscribeToWebhookAsync(Order.Id, HandleWebhookAsync, _cts.Token);
+    }
+
+    private async Task HandleWebhookAsync(OrderStatusUpdateDto update)
+    {
+        if (Order is null || update.OrderId != Order.Id)
+        {
+            return;
+        }
+
+        Order.Status = update.Status;
+
+        if (!string.IsNullOrEmpty(update.Message))
+        {
+            _statusMessage = update.Message;
+        }
+
+        if (!string.IsNullOrEmpty(update.TransactionHash))
+        {
+            _transactionHash = update.TransactionHash;
+        }
+
+        await InvokeAsync(StateHasChanged);
+
+        if (string.Equals(update.Status, "confirmed", StringComparison.OrdinalIgnoreCase))
+        {
+            await OnStatusChanged.InvokeAsync(update);
+        }
+    }
+
+    private async Task StopListeningAsync()
+    {
+        if (_cts is null)
+        {
+            return;
+        }
+
+        _cts.Cancel();
+
+        if (_listenTask is not null)
+        {
+            try
+            {
+                await _listenTask;
+            }
+            catch (OperationCanceledException)
+            {
+            }
+            catch (TaskCanceledException)
+            {
+            }
+        }
+
+        _cts.Dispose();
+        _cts = null;
+        _listenTask = null;
+        _listeningOrderId = null;
+    }
+
+    private async Task CopyAddress(string address)
+    {
+        if (string.IsNullOrWhiteSpace(address))
+        {
+            return;
+        }
+
+        await JS.InvokeVoidAsync("navigator.clipboard.writeText", address);
+
+        var tail = address.Length > 6 ? address[^6..] : address;
+        _statusMessage = $"Address copied (…{tail}).";
+        await InvokeAsync(StateHasChanged);
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        await StopListeningAsync();
+    }
+}

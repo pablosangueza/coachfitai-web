@@ -24,6 +24,24 @@ public class OrderDto
     public string Currency { get; set; } = string.Empty;
     public string Provider { get; set; } = string.Empty;
     public string Status { get; set; } = string.Empty;
+    public IReadOnlyList<CryptoWalletDto> Wallets { get; set; } = Array.Empty<CryptoWalletDto>();
+}
+
+public class CryptoWalletDto
+{
+    public string Symbol { get; set; } = string.Empty;
+    public string Network { get; set; } = string.Empty;
+    public string Address { get; set; } = string.Empty;
+    public string? Memo { get; set; }
+    public string? Note { get; set; }
+}
+
+public class OrderStatusUpdateDto
+{
+    public Guid OrderId { get; set; }
+    public string Status { get; set; } = string.Empty;
+    public string? Message { get; set; }
+    public string? TransactionHash { get; set; }
 }
 
 public class IngredientDto
