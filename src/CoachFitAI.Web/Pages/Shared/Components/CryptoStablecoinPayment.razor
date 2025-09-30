@@ -1,0 +1,199 @@
+@using System.Globalization
+@using System.Linq
+@inject IPaymentService Payments
+@inject AppState State
+
+<div class="card shadow-sm crypto-stablecoin border-0">
+  <div class="card-body">
+    <h5 class="card-title">Pay with USDT or USDC</h5>
+    <p class="text-muted small mb-4">
+      Send the exact amount to the wallet address below using one of the supported networks.
+      Once the transfer is complete, confirm to finalize your order.
+    </p>
+
+    @if (_isLoading)
+    {
+      <div class="text-center py-4">
+        <div class="spinner-border text-primary" role="status">
+          <span class="visually-hidden">Loading...</span>
+        </div>
+      </div>
+    }
+    else if (!string.IsNullOrEmpty(_errorMessage))
+    {
+      <div class="alert alert-danger" role="alert">
+        @_errorMessage
+      </div>
+      <button class="btn btn-outline-primary w-100" @onclick="ReloadOrder">Retry</button>
+    }
+    else if (_isCompleted)
+    {
+      <div class="alert alert-success" role="alert">
+        Payment confirmed! You will be redirected shortly.
+      </div>
+    }
+    else if (_order is not null)
+    {
+      <div class="mb-3">
+        <label class="form-label">Choose a stablecoin</label>
+        <div class="btn-group w-100" role="group">
+          @foreach (var asset in _options.Keys)
+          {
+            <button type="button"
+                    class="btn btn-outline-primary @((asset == _selectedAsset ? "active" : string.Empty))"
+                    @onclick="() => SelectAsset(asset)">
+              @asset
+            </button>
+          }
+        </div>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">Select network</label>
+        <select class="form-select" @bind="_selectedNetwork">
+          @foreach (var option in _options[_selectedAsset])
+          {
+            <option value="@option.Network">@option.Network</option>
+          }
+        </select>
+        <div class="form-text">Only send @AmountUsd.ToString("0.00", CultureInfo.InvariantCulture) @_selectedAsset on this network.</div>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">Amount</label>
+        <div class="fs-5 fw-semibold">
+          @AmountUsd.ToString("0.00", CultureInfo.InvariantCulture) @_selectedAsset
+        </div>
+        <div class="form-text">Stablecoins track the US Dollar 1:1, so @AmountUsd.ToString("0.00", CultureInfo.InvariantCulture) USD = @AmountUsd.ToString("0.00", CultureInfo.InvariantCulture) @_selectedAsset.</div>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">Wallet address</label>
+        <div class="border rounded px-3 py-2 bg-light user-select-all">
+          @SelectedOption.Address
+        </div>
+        @if (!string.IsNullOrWhiteSpace(SelectedOption.Note))
+        {
+          <div class="form-text">@SelectedOption.Note</div>
+        }
+      </div>
+
+      <button class="btn btn-success w-100" @onclick="ConfirmPayment" disabled="@_isConfirming">
+        @_confirmButtonText
+      </button>
+      @if (!string.IsNullOrEmpty(_statusMessage))
+      {
+        <div class="form-text text-muted text-center mt-2">@_statusMessage</div>
+      }
+    }
+  </div>
+</div>
+
+@code {
+  [Parameter] public decimal AmountUsd { get; set; }
+  [Parameter] public EventCallback OnPaymentCompleted { get; set; }
+
+  private readonly Dictionary<string, List<CryptoOption>> _options = new()
+  {
+    ["USDT"] = new()
+    {
+      new CryptoOption("Ethereum (ERC-20)", "0x1234....USDT", "Network fee may be higher on Ethereum."),
+      new CryptoOption("Polygon (USDT)", "0x9876....USDT", "Transfers usually confirm within a minute."),
+      new CryptoOption("Tron (TRC-20)", "TJ2exampleaddressForUSDT", "Double-check the network before sending.")
+    },
+    ["USDC"] = new()
+    {
+      new CryptoOption("Ethereum (ERC-20)", "0x1234....USDC", "Network fee may be higher on Ethereum."),
+      new CryptoOption("Polygon (USDC)", "0x9876....USDC", "Supports fast confirmations with low fees."),
+      new CryptoOption("Solana (SPL)", "5GexampleSolUSDCAddress", "Use a Solana-compatible wallet when selecting SPL.")
+    }
+  };
+
+  private OrderDto? _order;
+  private string _selectedAsset = "USDT";
+  private string _selectedNetwork = string.Empty;
+  private bool _isLoading = true;
+  private bool _isConfirming;
+  private bool _isCompleted;
+  private string? _errorMessage;
+  private string? _statusMessage;
+
+  private string _confirmButtonText => _isConfirming ? "Confirming..." : "I have sent the payment";
+
+  private CryptoOption SelectedOption => _options[_selectedAsset].First(o => o.Network == _selectedNetwork);
+
+  protected override async Task OnInitializedAsync()
+  {
+    await LoadOrderAsync();
+  }
+
+  private async Task LoadOrderAsync()
+  {
+    _isLoading = true;
+    _errorMessage = null;
+
+    try
+    {
+      _order = State.Order;
+      if (_order is null || _order.Amount != AmountUsd)
+      {
+        _order = await Payments.StartCheckoutAsync(AmountUsd);
+        State.SetOrder(_order);
+      }
+
+      _selectedAsset = _options.Keys.First();
+      _selectedNetwork = _options[_selectedAsset].First().Network;
+    }
+    catch (Exception ex)
+    {
+      _errorMessage = $"Unable to prepare payment: {ex.Message}";
+    }
+    finally
+    {
+      _isLoading = false;
+    }
+  }
+
+  private void SelectAsset(string asset)
+  {
+    if (_selectedAsset == asset)
+    {
+      return;
+    }
+
+    _selectedAsset = asset;
+    _selectedNetwork = _options[_selectedAsset].First().Network;
+  }
+
+  private async Task ConfirmPayment()
+  {
+    if (_order is null || _isConfirming)
+    {
+      return;
+    }
+
+    _isConfirming = true;
+    _statusMessage = "Waiting for confirmation...";
+
+    var confirmed = await Payments.ConfirmPaymentAsync(_order.Id);
+    _isConfirming = false;
+
+    if (confirmed)
+    {
+      _isCompleted = true;
+      _statusMessage = "Payment confirmed";
+      await OnPaymentCompleted.InvokeAsync();
+    }
+    else
+    {
+      _statusMessage = "We could not confirm the payment yet. Please try again in a few seconds.";
+    }
+  }
+
+  private Task ReloadOrder()
+  {
+    return LoadOrderAsync();
+  }
+
+  private record CryptoOption(string Network, string Address, string? Note);
+}
