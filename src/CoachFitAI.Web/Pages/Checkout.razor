@@ -1,7 +1,6 @@
 @page "/checkout"
 @using CoachFitAI.Web.Services
 @inject AppState State
-@inject IPaymentService Payments
 @inject NavigationManager Nav
 
 <div class="container mt-5">
@@ -17,7 +16,9 @@
       else
       {
         <p class="fs-5">Plan price: <b>$7</b></p>
-        <button class="btn btn-primary px-4 mt-3" @onclick="Pay">Pay (mock)</button>
+        <div class="mt-4 text-start">
+          <CryptoStablecoinPayment AmountUsd="7m" OnPaymentCompleted="HandlePaymentCompleted" />
+        </div>
       }
 
     </div>
@@ -25,11 +26,8 @@
 </div>
 
 @code {
-  async Task Pay()
+  private void HandlePaymentCompleted()
   {
-    var order = await Payments.StartCheckoutAsync(7m);
-    State.SetOrder(order);
-    var ok = await Payments.ConfirmPaymentAsync(order.Id);
-    if (ok) Nav.NavigateTo("thank-you");
+    Nav.NavigateTo("thank-you");
   }
 }

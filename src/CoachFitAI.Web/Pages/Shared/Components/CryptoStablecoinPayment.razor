@@ -1,0 +1,216 @@
+@using System.Globalization
+@using System.Linq
+@using Microsoft.JSInterop
+@inject IPaymentService Payments
+@inject AppState State
+@inject IJSRuntime JS
+
+<div class="cf-card cf-payment-card">
+  <div class="cf-payment-header">
+    <h5 class="cf-payment-title">Pay with USDT or USDC</h5>
+    <p class="cf-payment-subtitle">
+      Send the exact amount to the wallet address below using one of the supported networks.
+      Once the transfer is complete, confirm to finalize your order.
+    </p>
+  </div>
+
+  @if (_isLoading)
+  {
+    <div class="cf-payment-loading" role="status" aria-live="polite">
+      <div class="cf-spinner" aria-hidden="true"></div>
+      <span>Preparing payment...</span>
+    </div>
+  }
+  else if (!string.IsNullOrEmpty(_errorMessage))
+  {
+    <div class="cf-alert cf-alert-error" role="alert">
+      @_errorMessage
+    </div>
+    <button class="cf-btn cf-btn-primary w-100" @onclick="ReloadOrder">Retry</button>
+  }
+  else if (_isCompleted)
+  {
+    <div class="cf-alert cf-alert-success" role="status">
+      Payment confirmed! You will be redirected shortly.
+    </div>
+  }
+  else if (_order is not null)
+  {
+    <div class="cf-field">
+      <label>Choose a stablecoin</label>
+      <div class="cf-pill-group">
+        @foreach (var asset in _options.Keys)
+        {
+          <button type="button"
+                  class="cf-pill @((asset == _selectedAsset ? "active" : string.Empty))"
+                  @onclick="() => SelectAsset(asset)">
+            @asset
+          </button>
+        }
+      </div>
+    </div>
+
+    <div class="cf-field">
+      <label>Select network</label>
+      <select @bind="_selectedNetwork">
+        @foreach (var option in _options[_selectedAsset])
+        {
+          <option value="@option.Network">@option.Network</option>
+        }
+      </select>
+      <span class="cf-help">Only send @AmountUsd.ToString("0.00", CultureInfo.InvariantCulture) @_selectedAsset on this network.</span>
+    </div>
+
+    <div class="cf-field">
+      <label>Amount</label>
+      <div class="cf-amount-display">
+        <span class="cf-amount-value">@AmountUsd.ToString("0.00", CultureInfo.InvariantCulture)</span>
+        <span class="cf-amount-asset">@_selectedAsset</span>
+      </div>
+      <span class="cf-help">Stablecoins track the US Dollar 1:1, so @AmountUsd.ToString("0.00", CultureInfo.InvariantCulture) USD = @AmountUsd.ToString("0.00", CultureInfo.InvariantCulture) @_selectedAsset.</span>
+    </div>
+
+    <div class="cf-field">
+      <label>Wallet address</label>
+      <div class="cf-wallet" title="Click to copy" @onclick="() => CopyToClipboard(SelectedOption.Address)">
+        @SelectedOption.Address
+      </div>
+      @if (!string.IsNullOrWhiteSpace(SelectedOption.Note))
+      {
+        <span class="cf-help">@SelectedOption.Note</span>
+      }
+    </div>
+
+    <button class="cf-btn cf-btn-primary w-100" @onclick="ConfirmPayment" disabled="@_isConfirming">
+      @_confirmButtonText
+    </button>
+    @if (!string.IsNullOrEmpty(_statusMessage))
+    {
+      <div class="cf-status">@_statusMessage</div>
+    }
+  }
+</div>
+
+@code {
+  [Parameter] public decimal AmountUsd { get; set; }
+  [Parameter] public EventCallback OnPaymentCompleted { get; set; }
+
+  private readonly Dictionary<string, List<CryptoOption>> _options = new()
+  {
+    ["USDT"] = new()
+    {
+      new CryptoOption("Ethereum (ERC-20)", "0x1234....USDT", "Network fee may be higher on Ethereum."),
+      new CryptoOption("Polygon (USDT)", "0x9876....USDT", "Transfers usually confirm within a minute."),
+      new CryptoOption("Tron (TRC-20)", "TJ2exampleaddressForUSDT", "Double-check the network before sending.")
+    },
+    ["USDC"] = new()
+    {
+      new CryptoOption("Ethereum (ERC-20)", "0x1234....USDC", "Network fee may be higher on Ethereum."),
+      new CryptoOption("Polygon (USDC)", "0x9876....USDC", "Supports fast confirmations with low fees."),
+      new CryptoOption("Solana (SPL)", "5GexampleSolUSDCAddress", "Use a Solana-compatible wallet when selecting SPL.")
+    }
+  };
+
+  private OrderDto? _order;
+  private string _selectedAsset = "USDT";
+  private string _selectedNetwork = string.Empty;
+  private bool _isLoading = true;
+  private bool _isConfirming;
+  private bool _isCompleted;
+  private string? _errorMessage;
+  private string? _statusMessage;
+
+  private string _confirmButtonText => _isConfirming ? "Confirming..." : "I have sent the payment";
+
+  private CryptoOption SelectedOption => _options[_selectedAsset].First(o => o.Network == _selectedNetwork);
+
+  private async Task CopyToClipboard(string address)
+  {
+    try
+    {
+      await JS.InvokeVoidAsync("navigator.clipboard.writeText", address);
+      _statusMessage = "Wallet address copied";
+    }
+    catch
+    {
+      _statusMessage = "Copy this address manually if your browser blocks clipboard access.";
+    }
+
+    StateHasChanged();
+  }
+
+  protected override async Task OnInitializedAsync()
+  {
+    await LoadOrderAsync();
+  }
+
+  private async Task LoadOrderAsync()
+  {
+    _isLoading = true;
+    _errorMessage = null;
+
+    try
+    {
+      _order = State.Order;
+      if (_order is null || _order.Amount != AmountUsd)
+      {
+        _order = await Payments.StartCheckoutAsync(AmountUsd);
+        State.SetOrder(_order);
+      }
+
+      _selectedAsset = _options.Keys.First();
+      _selectedNetwork = _options[_selectedAsset].First().Network;
+    }
+    catch (Exception ex)
+    {
+      _errorMessage = $"Unable to prepare payment: {ex.Message}";
+    }
+    finally
+    {
+      _isLoading = false;
+    }
+  }
+
+  private void SelectAsset(string asset)
+  {
+    if (_selectedAsset == asset)
+    {
+      return;
+    }
+
+    _selectedAsset = asset;
+    _selectedNetwork = _options[_selectedAsset].First().Network;
+  }
+
+  private async Task ConfirmPayment()
+  {
+    if (_order is null || _isConfirming)
+    {
+      return;
+    }
+
+    _isConfirming = true;
+    _statusMessage = "Waiting for confirmation...";
+
+    var confirmed = await Payments.ConfirmPaymentAsync(_order.Id);
+    _isConfirming = false;
+
+    if (confirmed)
+    {
+      _isCompleted = true;
+      _statusMessage = "Payment confirmed";
+      await OnPaymentCompleted.InvokeAsync();
+    }
+    else
+    {
+      _statusMessage = "We could not confirm the payment yet. Please try again in a few seconds.";
+    }
+  }
+
+  private Task ReloadOrder()
+  {
+    return LoadOrderAsync();
+  }
+
+  private record CryptoOption(string Network, string Address, string? Note);
+}
