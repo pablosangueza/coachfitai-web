@@ -1,4 +1,6 @@
 @page "/checkout"
+@using CoachFitAI.Shared.Web3Components
+@using CoachFitAI.Web.Pages.Shared.Web3Components
 @using CoachFitAI.Web.Services
 @inject AppState State
 @inject IPaymentService Payments
@@ -16,8 +18,10 @@
       }
       else
       {
-        <p class="fs-5">Plan price: <b>$7</b></p>
-        <button class="btn btn-primary px-4 mt-3" @onclick="Pay">Pay (mock)</button>
+        <p class="fs-5">Plan price: <b>$1</b></p>
+        <Web3PaymentWatcher Request="@Req"
+                      Timeout="@TimeSpan.FromMinutes(20)"
+                      OnPaymentConfirmed="HandlePaid" />
       }
 
     </div>
@@ -25,6 +29,14 @@
 </div>
 
 @code {
+
+    private string? DownloadUrl;
+
+  private PaymentRequest Req = new PaymentRequest()
+    {
+        OrderId = Guid.NewGuid().ToString(),
+        ExpectedAmount = 1.00m,
+    };
   async Task Pay()
   {
     var order = await Payments.StartCheckoutAsync(7m);
@@ -32,4 +44,13 @@
     var ok = await Payments.ConfirmPaymentAsync(order.Id);
     if (ok) Nav.NavigateTo("thank-you");
   }
+
+   private Task HandlePaid(PaymentResult result)
+    {
+        DownloadUrl = $"https://tu-servidor.com/download?order={Req.OrderId}&sig=...";
+        Console.WriteLine($"Pago OK: {result.TransactionHash} {result.Amount} {result.From} -> {result.To}");
+        StateHasChanged();
+         Nav.NavigateTo("thank-you");
+        return Task.CompletedTask;
+    }
 }

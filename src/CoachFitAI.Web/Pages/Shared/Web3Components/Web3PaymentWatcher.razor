@@ -1,0 +1,164 @@
+@* /Shared/Crypto/CryptoPaymentWatcher.razor *@
+@using CoachFitAI.Shared.Web3Components
+@inject IPaymentValidator Validator
+@inject Web3PaymentConfig PaymentConfig
+
+<div class="crypto-watcher">
+    <div><b>Order:</b> @Request.OrderId</div>
+    <div>
+        <b>Token:</b>
+        <select @bind="SelectedToken">
+            @foreach (var token in SupportedTokens)
+            {
+                <option value="@token">@token</option>
+            }
+        </select>
+    </div>
+    <div>
+        <b>Network:</b>
+        <select @bind="SelectedNetwork">
+            @foreach (var network in SupportedNetworks)
+            {
+                <option value="@network">@network</option>
+            }
+        </select>
+    </div>
+    <div><b>Merchant:</b> @MerchantAddress</div>
+    <div><b>Esperando:</b> @Request.ExpectedAmount</div>
+
+    <div class="mt-2">
+        <button class="btn btn-primary" @onclick="VerifyPaymentNowAsync" disabled="@IsVerifying">
+            @if (IsVerifying) { <span>Verificando…</span> } else { <span>He pagado / I paid</span> }
+        </button>
+    </div>
+
+    <div class="mt-2"><b>Estado:</b> @StatusText</div>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public PaymentRequest Request { get; set; } = default!;
+    [Parameter] public TimeSpan Timeout { get; set; } = TimeSpan.FromMinutes(15);
+    [Parameter] public EventCallback<PaymentResult> OnPaymentConfirmed { get; set; }
+
+    private Web3PaymentConfig Config => PaymentConfig;
+
+    private string[] SupportedTokens = Array.Empty<string>();
+    private string[] SupportedNetworks = Array.Empty<string>();
+
+    private string _selectedToken = "USDT";
+    private string _selectedNetwork = "Ethereum";
+    private string SelectedToken
+    {
+        get => _selectedToken;
+        set
+        {
+            if (_selectedToken != value)
+            {
+                _selectedToken = value;
+                OnSelectionChanged();
+            }
+        }
+    }
+    private string SelectedNetwork
+    {
+        get => _selectedNetwork;
+        set
+        {
+            if (_selectedNetwork != value)
+            {
+                _selectedNetwork = value;
+                OnSelectionChanged();
+            }
+        }
+    }
+
+    private string MerchantAddress = "";
+    private string RpcUrl = "";
+    private string TokenContract = "";
+
+    private string StatusText = "Pendiente…";
+    private bool IsVerifying = false;
+
+    protected override void OnInitialized()
+    {
+        SupportedTokens = Config.SupportedTokens;
+        SupportedNetworks = Config.Networks.Select(n => n.Name).ToArray();
+
+        // Set defaults
+        SelectedToken = SupportedTokens.FirstOrDefault() ?? "USDT";
+        SelectedNetwork = SupportedNetworks.FirstOrDefault() ?? "Ethereum";
+
+        UpdateNetworkAndToken();
+        // Note: no automatic watcher start — verify manually with the button
+    }
+
+    private void UpdateNetworkAndToken()
+    {
+        var network = Config.Networks.FirstOrDefault(n => n.Name == SelectedNetwork);
+        if (network != null)
+        {
+            MerchantAddress = network.MerchantAddress;
+            RpcUrl = network.RpcUrl;
+            TokenContract = network.TokenContracts.TryGetValue(SelectedToken, out var contract) ? contract : "";
+        }
+
+        // Update request fields so verification uses correct config
+        Request.TokenSymbol = SelectedToken;
+        Request.NetworkName = SelectedNetwork;
+        Request.MerchantAddress = MerchantAddress;
+        Request.RpcUrl = RpcUrl;
+        Request.TokenContract = TokenContract;
+    }
+
+    private void OnSelectionChanged()
+    {
+        UpdateNetworkAndToken();
+        StatusText = "Pendiente…";
+        StateHasChanged();
+    }
+
+    private async Task VerifyPaymentNowAsync()
+    {
+        try
+        {
+            IsVerifying = true;
+            StatusText = "Verificando pago en la blockchain…";
+            StateHasChanged();
+
+            UpdateNetworkAndToken();
+
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(20));
+            // call same validator but with a short timeout to perform a single check
+            var result = await Validator.WaitForPaymentAsync(Request, TimeSpan.FromSeconds(15), cts.Token);
+
+            StatusText = result.State switch
+            {
+                PaymentState.Confirmed => $"Confirmado (tx: {result.TransactionHash})",
+                PaymentState.Timeout   => "No se detectó pago en el tiempo de verificación",
+                PaymentState.Failed    => $"Falló: {result.Message}",
+                _ => "Pendiente…"
+            };
+            StateHasChanged();
+
+            if (result.State == PaymentState.Confirmed)
+            {
+                await OnPaymentConfirmed.InvokeAsync(result);
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            StatusText = "Verificación cancelada o timeout";
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            StatusText = $"Error verificando pago: {ex.Message}";
+            StateHasChanged();
+        }
+        finally
+        {
+            IsVerifying = false;
+            StateHasChanged();
+        }
+    }
+}
