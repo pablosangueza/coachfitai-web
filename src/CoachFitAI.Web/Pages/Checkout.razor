@@ -19,6 +19,19 @@
       else
       {
         <p class="fs-5">Plan price: <b>$1</b></p>
+          <!-- Email input for sending PDF of the plan -->
+        <div class="mb-3 text-start">
+          <label for="emailInput" class="form-label">Email to receive plan (PDF)</label>
+          <input id="emailInput"
+                 class="form-control"
+                 type="email"
+                 placeholder="you@example.com"
+                 @bind="Email" />
+          @if (!string.IsNullOrEmpty(Email) && !IsValidEmail(Email))
+          {
+            <div class="text-danger small mt-1">Enter a valid email address</div>
+          }
+        </div>
         <Web3PaymentWatcher Request="@Req"
                       Timeout="@TimeSpan.FromMinutes(20)"
                       OnPaymentConfirmed="HandlePaid" />
@@ -31,6 +44,7 @@
 @code {
 
     private string? DownloadUrl;
+    private string Email = string.Empty;
 
   private PaymentRequest Req = new PaymentRequest()
     {
@@ -47,10 +61,29 @@
 
    private Task HandlePaid(PaymentResult result)
     {
-        DownloadUrl = $"https://tu-servidor.com/download?order={Req.OrderId}&sig=...";
-        Console.WriteLine($"Pago OK: {result.TransactionHash} {result.Amount} {result.From} -> {result.To}");
+        // Include the email in the download link (for example) and call server-side send-if-needed.
+        DownloadUrl = $"https://tu-servidor.com/download?order={Req.OrderId}&email={Uri.EscapeDataString(Email ?? "")}&sig=...";
+        Console.WriteLine($"Pago OK: {result.TransactionHash} {result.Amount} {result.From} -> {result.To} (email: {Email})");
+
+        // TODO: Call your server API to generate the PDF and send it to Email.
+        // Example placeholder:
+        // await MyServerApi.SendPlanPdfAsync(orderId: Req.OrderId, email: Email);
+
         StateHasChanged();
          Nav.NavigateTo("thank-you");
         return Task.CompletedTask;
+    }
+    private bool IsValidEmail(string? email)
+    {
+        if (string.IsNullOrWhiteSpace(email)) return false;
+        try
+        {
+            var addr = new System.Net.Mail.MailAddress(email!);
+            return addr.Address == email;
+        }
+        catch
+        {
+            return false;
+        }
     }
 }

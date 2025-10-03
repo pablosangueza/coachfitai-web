@@ -15,6 +15,7 @@ public class IntakeDto
     public string[] Restrictions { get; set; } = Array.Empty<string>();
     public string DailyActivity { get; set; } = string.Empty;
     public string? PhotoUrl { get; set; }
+    public string Email { get; set; } = string.Empty;
 }
 
 public class OrderDto

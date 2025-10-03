@@ -13,20 +13,85 @@
       }
       else
       {
-        <p><b>Summary:</b> @State.Plan.Summary</p>
-        <p><b>Calories/day:</b> @State.Plan.CaloriesPerDay.Min–@State.Plan.CaloriesPerDay.Max</p>
+        
 
-        <h4 class="mt-4">Sessions</h4>
-        <ul class="list-group">
-          @foreach (var s in State.Plan.Sessions)
+        <!-- PDF section: load link, show spinner and email notice -->
+        <div class="mt-4 p-3 border rounded">
+          <h5>Download Plan (PDF)</h5>
+
+          @if (isLoadingPdf)
           {
-            <li class="list-group-item">
-              <b>@s.Day</b> — @s.Focus (@s.DurationMin min)
-            </li>
+            <div class="d-flex align-items-center">
+              <div class="spinner-border me-2" role="status" aria-hidden="true"></div>
+              <div>Preparing PDF... please wait.</div>
+            </div>
           }
-        </ul>
+          else if (!string.IsNullOrEmpty(PdfUrl))
+          {
+            <div>
+              <a class="btn btn-outline-primary" href="@PdfUrl" target="_blank" rel="noopener">Open PDF</a>
+              <span class="ms-2 text-muted small">You can also right-click → Save link as...</span>
+            </div>
+          }
+          else
+          {
+            <div class="mb-2">
+              <button class="btn btn-primary" @onclick="LoadPdf">Get PDF</button>
+            </div>
+          }
+
+          <div class="mt-3 small text-muted">
+            A copy of the plan will also be sent to your email
+            @if (!string.IsNullOrWhiteSpace(State.Intake?.Email))
+            {
+              @( $" ({State.Intake.Email})" )
+            }
+            else
+            {
+              @( "(the email you provided at checkout)" )
+            }
+          </div>
+        </div>
+
       }
 
     </div>
   </div>
 </div>
+
+@code {
+  // ...existing code...
+  private bool isLoadingPdf = false;
+  private string? PdfUrl;
+
+  private async Task LoadPdf()
+  {
+    if (isLoadingPdf) return;
+
+    isLoadingPdf = true;
+    PdfUrl = null;
+
+    try
+    {
+      // Placeholder: call your server API to generate/return the PDF link.
+      // Replace with an actual HTTP call to your backend. Example:
+      // PdfUrl = await MyApi.GeneratePlanPdfAsync(State.Plan.Id, State.Intake?.Email);
+
+      // Simulate short delay for generation
+      await Task.Delay(1200);
+
+      // Temporary mock link (replace in production)
+      PdfUrl = $"https://example.com/plans/{Guid.NewGuid().ToString()}.pdf";
+    }
+    catch
+    {
+      // In production, show a user-friendly error and log the exception.
+      PdfUrl = null;
+    }
+    finally
+    {
+      isLoadingPdf = false;
+      StateHasChanged();
+    }
+  }
+}

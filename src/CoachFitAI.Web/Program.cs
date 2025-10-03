@@ -23,7 +23,9 @@ catch (Exception ex)
     Console.WriteLine($"Warning: could not load web3config.json: {ex.Message}");
 }
 
-builder.Services.AddScoped<IPaymentValidator, EvmPaymentValidator>();
+//builder.Services.AddScoped<IPaymentValidator, EvmPaymentValidator>();
+builder.Services.AddScoped<IPaymentValidator, MockPaymentValidator>();
+
 
 
 // Bind PaymentConfig from loaded JSON and register singleton
