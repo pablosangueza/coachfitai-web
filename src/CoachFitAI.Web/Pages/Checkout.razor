@@ -19,19 +19,7 @@
       else
       {
         <p class="fs-5">Plan price: <b>$1</b></p>
-          <!-- Email input for sending PDF of the plan -->
-        <div class="mb-3 text-start">
-          <label for="emailInput" class="form-label">Email to receive plan (PDF)</label>
-          <input id="emailInput"
-                 class="form-control"
-                 type="email"
-                 placeholder="you@example.com"
-                 @bind="Email" />
-          @if (!string.IsNullOrEmpty(Email) && !IsValidEmail(Email))
-          {
-            <div class="text-danger small mt-1">Enter a valid email address</div>
-          }
-        </div>
+        
         <Web3PaymentWatcher Request="@Req"
                       Timeout="@TimeSpan.FromMinutes(20)"
                       OnPaymentConfirmed="HandlePaid" />
