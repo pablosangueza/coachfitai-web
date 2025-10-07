@@ -1,4 +1,5 @@
 @page "/plan"
+@using System.Net.Http.Json
 
 @inject HttpClient Http
 @inject AppState State
@@ -76,7 +77,8 @@
 
     try
     {
-      var resp = await Http.PostAsJsonAsync("api/plan/pdf", State.Plan);
+      var resp = await Http.PostAsJsonAsync("https://localhost:7064/api/plan/pdf", State.Plan);
+
       if (!resp.IsSuccessStatusCode)
       {
         // handle error (log/show message)
@@ -92,8 +94,9 @@
       // Optionally provide a temporary public URL (skip if not available)
       // PdfUrl = $"data:application/pdf;base64,{base64}";
     }
-    catch
+    catch (Exception ex)
     {
+      Console.WriteLine(ex.Message);
       // handle errors
     }
     finally
