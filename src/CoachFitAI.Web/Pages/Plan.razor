@@ -1,5 +1,8 @@
 @page "/plan"
+
+@inject HttpClient Http
 @inject AppState State
+@inject IJSRuntime JS
 
 <div class="container mt-5">
   <div class="row justify-content-center">
@@ -66,27 +69,32 @@
 
   private async Task LoadPdf()
   {
-    if (isLoadingPdf) return;
+    if (isLoadingPdf || State.Plan is null) return;
 
     isLoadingPdf = true;
     PdfUrl = null;
 
     try
     {
-      // Placeholder: call your server API to generate/return the PDF link.
-      // Replace with an actual HTTP call to your backend. Example:
-      // PdfUrl = await MyApi.GeneratePlanPdfAsync(State.Plan.Id, State.Intake?.Email);
+      var resp = await Http.PostAsJsonAsync("api/plan/pdf", State.Plan);
+      if (!resp.IsSuccessStatusCode)
+      {
+        // handle error (log/show message)
+        return;
+      }
 
-      // Simulate short delay for generation
-      await Task.Delay(1200);
+      var bytes = await resp.Content.ReadAsByteArrayAsync();
+      var base64 = Convert.ToBase64String(bytes);
 
-      // Temporary mock link (replace in production)
-      PdfUrl = $"https://example.com/plans/{Guid.NewGuid().ToString()}.pdf";
+      // trigger client download
+      await JS.InvokeVoidAsync("downloadFileFromBase64", "coachfitai-plan.pdf", base64);
+
+      // Optionally provide a temporary public URL (skip if not available)
+      // PdfUrl = $"data:application/pdf;base64,{base64}";
     }
     catch
     {
-      // In production, show a user-friendly error and log the exception.
-      PdfUrl = null;
+      // handle errors
     }
     finally
     {

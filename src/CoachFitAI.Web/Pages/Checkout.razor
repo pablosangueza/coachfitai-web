@@ -5,6 +5,7 @@
 @inject AppState State
 @inject IPaymentService Payments
 @inject NavigationManager Nav
+@inject IPlanService PlanService
 
 <div class="container mt-5">
   <div class="row justify-content-center">
@@ -47,19 +48,42 @@
     if (ok) Nav.NavigateTo("thank-you");
   }
 
-   private Task HandlePaid(PaymentResult result)
+   private async Task HandlePaid(PaymentResult result)
     {
         // Include the email in the download link (for example) and call server-side send-if-needed.
         DownloadUrl = $"https://tu-servidor.com/download?order={Req.OrderId}&email={Uri.EscapeDataString(Email ?? "")}&sig=...";
         Console.WriteLine($"Pago OK: {result.TransactionHash} {result.Amount} {result.From} -> {result.To} (email: {Email})");
 
-        // TODO: Call your server API to generate the PDF and send it to Email.
-        // Example placeholder:
-        // await MyServerApi.SendPlanPdfAsync(orderId: Req.OrderId, email: Email);
+         // Generate plan using IPlanService (MockPlanService in dev)
+      if (State.Intake != null)
+      {
+          StateHasChanged();
+
+          try
+          {
+              using var cts = new CancellationTokenSource(TimeSpan.FromMinutes(2));
+              var plan = await PlanService.GeneratePlanAsync(State.Intake);
+              if (plan != null)
+              {
+                  State.SetPlan(plan);
+              }
+              else
+              {
+                  Console.WriteLine("Plan generation returned null.");
+              }
+          }
+          catch (Exception ex)
+          {
+              Console.WriteLine($"Plan generation failed: {ex.Message}");
+          }
+         
+      }
+
+
 
         StateHasChanged();
          Nav.NavigateTo("thank-you");
-        return Task.CompletedTask;
+        
     }
     private bool IsValidEmail(string? email)
     {

@@ -37,4 +37,5 @@ builder.Services.AddScoped<AppState>();
 builder.Services.AddScoped<IPaymentService, MockPaymentService>();
 builder.Services.AddScoped<IPlanService, MockPlanService>();
 
+
 await builder.Build().RunAsync();
